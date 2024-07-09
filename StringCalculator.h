@@ -2,5 +2,8 @@
 
 int add(const char*input)
 {
- return -1; 
+if (str == NULL || str[0] == '\0') {
+        return 1; // The string is empty
+    }
+ return -1;
 }
