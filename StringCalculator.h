@@ -72,3 +72,4 @@ void StringCalculator::checkForNegatives(const std::vector<int>& numbers) {
     }
 }
 
+
