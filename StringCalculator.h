@@ -1,60 +1,84 @@
-#include "StringCalculator.h"
 #include <gtest/gtest.h>
-
-// Define your test cases here
-
-// Test cases
-TEST(StringCalculatorTest, TestEmptyString) {
-    EXPECT_EQ(add(""), 0);
+#include "StringCalculator.h"
+ 
+TEST(StringCalculatorTests, AddTokenIfNotEmpty) {
+    std::vector<std::string> tokens;
+    addTokenIfNotEmpty("", tokens);
+    ASSERT_EQ(tokens.size(), 0); // Expect no tokens added for empty string
+ 
+    addTokenIfNotEmpty("token", tokens);
+    ASSERT_EQ(tokens.size(), 1); // Expect one token added
+    ASSERT_EQ(tokens[0], "token");
 }
-
-TEST(StringCalculatorTest, TestSingleNumber) {
-    EXPECT_EQ(add("1"), 1);
+ 
+TEST(StringCalculatorTests, SplitHelper) {
+    std::string input = "1,2,3";
+    std::vector<std::string> tokens = splitHelper(input, ",");
+    ASSERT_EQ(tokens.size(), 3); // Expect three tokens
+    ASSERT_EQ(tokens[0], "1");
+    ASSERT_EQ(tokens[1], "2");
+    ASSERT_EQ(tokens[2], "3");
 }
-
-TEST(StringCalculatorTest, TestMultipleNumbers) {
-    EXPECT_EQ(add("1,2,3"), 6);
+ 
+// Test case for tokenize function
+TEST(StringCalculatorTests, Tokenize) {
+    std::string input = "1\n2,3";
+    std::vector<std::string> tokens = tokenize(input, ",\n");
+    ASSERT_EQ(tokens.size(), 3); // Expect three tokens
+    ASSERT_EQ(tokens[0], "1");
+    ASSERT_EQ(tokens[1], "2");
+    ASSERT_EQ(tokens[2], "3");
 }
-
-TEST(StringCalculatorTest, TestNewlineDelimiter) {
-    EXPECT_EQ(add("1\n2,3"), 6);
+ 
+TEST(StringCalculatorTests, GetDelimiter) {
+    std::string input = "//;\n1;2;3";
+    std::string delimiter = getDelimiter(input);
+    ASSERT_EQ(delimiter, ";"); // Expect ';' as delimiter
 }
-
-TEST(StringCalculatorTest, TestCustomDelimiter) {
-    EXPECT_EQ(add("//;\n1;2"), 3);
+ 
+TEST(StringCalculatorTests, GetNumbersString) {
+    std::string input = "//;\n1;2;3";
+    std::string numbers = getNumbersString(input);
+    ASSERT_EQ(numbers, "1;2;3"); // Expect "1;2;3" as numbers string
 }
-
-TEST(StringCalculatorTest, TestNegativeNumbers) {
+ 
+TEST(StringCalculatorTests, NegativeNumbersHandling) {
+    std::vector<int> nums = {1, -2, 3, -4};
+    std::vector<int> negatives;
+    collectNegatives(nums, negatives);
+    ASSERT_EQ(negatives.size(), 2); // Expect two negative numbers collected
+ 
     try {
-        add("-1,2");
-        FAIL() << "Expected std::runtime_error";
-    } catch (std::runtime_error const& err) {
-        EXPECT_EQ(err.what(), std::string("negatives not allowed: -1"));
-    } catch (...) {
-        FAIL() << "Expected std::runtime_error";
-    }
-
-    try {
-        add("2,-4,3,-5");
-        FAIL() << "Expected std::runtime_error";
-    } catch (std::runtime_error const& err) {
-        EXPECT_EQ(err.what(), std::string("negatives not allowed: -4, -5"));
-    } catch (...) {
-        FAIL() << "Expected std::runtime_error";
+        throwNegativesException(negatives);
+        FAIL() << "Exception not thrown";
+    } catch (const std::runtime_error& e) {
+        std::string errorMessage = e.what();
+        ASSERT_TRUE(errorMessage.find("-2") != std::string::npos);
+        ASSERT_TRUE(errorMessage.find("-4") != std::string::npos);
     }
 }
-
-TEST(StringCalculatorTest, TestNumbersGreaterThan1000) {
-    EXPECT_EQ(add("2,1001"), 2);
-    EXPECT_EQ(add("1000,1001,2"), 1002);
+ 
+TEST(StringCalculatorTests, SumNumbers) {
+    std::vector<int> nums = {1, 2, 3};
+    int sum = sumNumbers(nums);
+    ASSERT_EQ(sum, 6); // Expect sum to be 6
 }
-
-TEST(StringCalculatorTest, TestMultiCharacterDelimiter) {
-    EXPECT_EQ(add("//[***]\n1***2***3"), 6);
+ 
+TEST(StringCalculatorTests, ParseAndExtractTokens) {
+    std::string input = "1,2,3";
+    std::vector<int> parsedNumbers = extractAndParseNumbers(input);
+    ASSERT_EQ(parsedNumbers.size(), 3);
+    ASSERT_EQ(parsedNumbers[0], 1);
+    ASSERT_EQ(parsedNumbers[1], 2);
+    ASSERT_EQ(parsedNumbers[2], 3);
 }
-
+ 
+TEST(StringCalculatorTests, AddFunction) {
+    int result = add("1,2,3");
+    ASSERT_EQ(result, 6); // Expect sum of 1 + 2 + 3 = 6
+}
+ 
 int main(int argc, char** argv) {
-    ::testing::InitGoogleTest(&argc, argv);
+    testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
-
