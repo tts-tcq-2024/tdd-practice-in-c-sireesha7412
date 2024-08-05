@@ -1,261 +1,115 @@
-#ifndef STRING_CALCULATOR_H
-#define STRING_CALCULATOR_H
-
 #include <string>
 #include <vector>
 #include <sstream>
 #include <stdexcept>
-#include <regex>
+#include <algorithm>
+#include <iterator>
 
-namespace {
-    void addTokenIfNotEmpty(const std::string& token, std::vector<std::string>& tokens) {
-        if (!token.empty()) {
-            tokens.push_back(token);
-        }
+// Add token to the tokens vector if it's not empty
+void addTokenIfNotEmpty(const std::string& token, std::vector<std::string>& tokens) {
+    if (!token.empty()) {
+        tokens.push_back(token);
     }
+}
 
-    std::vector<std::string> splitHelper(const std::string& str, const std::string& delimiter) {
-        std::vector<std::string> tokens;
-        size_t prev = 0, pos = 0;
-        while ((pos = str.find(delimiter, prev)) != std::string::npos) {
-            std::string token = str.substr(prev, pos - prev);
+// Split the input string by the delimiter and return a vector of tokens
+std::vector<std::string> splitHelper(const std::string& input, const std::string& delimiter) {
+    std::vector<std::string> tokens;
+    size_t start = 0, end = 0;
+
+    while ((end = input.find(delimiter, start)) != std::string::npos) {
+        addTokenIfNotEmpty(input.substr(start, end - start), tokens);
+        start = end + delimiter.length();
+    }
+    addTokenIfNotEmpty(input.substr(start), tokens);
+
+    return tokens;
+}
+
+// Tokenize the input string by multiple delimiters
+std::vector<std::string> tokenize(const std::string& input, const std::string& delimiters) {
+    std::vector<std::string> tokens;
+    std::string token;
+    for (char ch : input) {
+        if (delimiters.find(ch) != std::string::npos) {
             addTokenIfNotEmpty(token, tokens);
-            prev = pos + delimiter.length();
+            token.clear();
+        } else {
+            token += ch;
         }
-        std::string token = str.substr(prev);
-        addTokenIfNotEmpty(token, tokens);
-        return tokens;
     }
+    addTokenIfNotEmpty(token, tokens);
+    return tokens;
+}
 
-    std::vector<std::string> split(const std::string& str, const std::string& delimiter) {
-        return splitHelper(str, delimiter);
+// Get the delimiter from the input string
+std::string getDelimiter(const std::string& input) {
+    if (input.substr(0, 2) == "//") {
+        return std::string(1, input[2]);
     }
+    return ",";
+}
 
-    std::vector<std::string> tokenize(const std::string& str, const std::string& delimiters) {
-        std::vector<std::string> tokens;
-        std::string regexPattern = "[" + delimiters + "\n]";
-        std::regex re(regexPattern);
-        std::sregex_token_iterator it(str.begin(), str.end(), re, -1);
-        std::sregex_token_iterator end;
-        while (it != end) {
-            tokens.push_back(*it++);
+// Get the numbers string from the input string
+std::string getNumbersString(const std::string& input) {
+    if (input.substr(0, 2) == "//") {
+        return input.substr(4);
+    }
+    return input;
+}
+
+// Collect negative numbers from the vector of numbers
+void collectNegatives(const std::vector<int>& nums, std::vector<int>& negatives) {
+    for (int num : nums) {
+        if (num < 0) {
+            negatives.push_back(num);
         }
-        return tokens;
     }
+}
 
-    std::string getDelimiter(const std::string& str) {
-        if (str.substr(0, 2) == "//") {
-            size_t endPos = str.find('\n');
-            return str.substr(2, endPos - 2);
-        }
-        return ",\n";
-    }
-
-    std::string getNumbersString(const std::string& str) {
-        if (str.substr(0, 2) == "//") {
-            size_t newlinePos = str.find('\n');
-            return str.substr(newlinePos + 1);
-        }
-        return str;
-    }
-
-    void throwNegativesException(const std::vector<int>& negatives) {
+// Throw an exception if there are negative numbers
+void throwNegativesException(const std::vector<int>& negatives) {
+    if (!negatives.empty()) {
         std::ostringstream oss;
-        oss << "negatives not allowed: ";
-        for (size_t i = 0; i < negatives.size(); ++i) {
-            if (i > 0) oss << ", ";
-            oss << negatives[i];
-        }
+        oss << "Negatives not allowed: ";
+        std::copy(negatives.begin(), negatives.end(), std::ostream_iterator<int>(oss, " "));
         throw std::runtime_error(oss.str());
     }
-
-    void collectNegatives(const std::vector<int>& numbers, std::vector<int>& negatives) {
-        for (int num : numbers) {
-            if (num < 0) {
-                negatives.push_back(num);
-            }
-        }
-    }
-
-    void checkNegatives(const std::vector<int>& numbers) {
-        std::vector<int> negatives;
-        collectNegatives(numbers, negatives);
-        if (!negatives.empty()) {
-            throwNegativesException(negatives);
-        }
-    }
-
-    int sumNumbers(const std::vector<int>& numbers) {
-        int sum = 0;
-        for (int num : numbers) {
-            if (num <= 1000) {
-                sum += num;
-            }
-        }
-        return sum;
-    }
-
-    std::vector<int> parseNumbers(const std::vector<std::string>& tokens) {
-        std::vector<int> numbers;
-        for (const std::string& token : tokens) {
-            if (!token.empty()) {
-                numbers.push_back(std::stoi(token));
-            }
-        }
-        return numbers;
-    }
-
-    std::vector<std::string> extractTokens(const std::string& numbers) {
-        std::string delimiters = getDelimiter(numbers);
-        std::string nums = getNumbersString(numbers);
-        return tokenize(nums, delimiters);
-    }
-
-    std::vector<int> extractAndParseNumbers(const std::string& numbers) {
-        std::vector<std::string> tokens = extractTokens(numbers);
-        return parseNumbers(tokens);
-    }
 }
 
-int add(const std::string& numbers) {
-    if (numbers.empty()) {
-        return 0;
-    }
-
-    std::vector<int> parsedNumbers = extractAndParseNumbers(numbers);
-    checkNegatives(parsedNumbers);
-    return sumNumbers(parsedNumbers);
+// Sum the numbers in the vector
+int sumNumbers(const std::vector<int>& nums) {
+    return std::accumulate(nums.begin(), nums.end(), 0);
 }
 
-#ifndef STRING_CALCULATOR_H
-#define STRING_CALCULATOR_H
+// Extract and parse numbers from the input string
+std::vector<int> extractAndParseNumbers(const std::string& input) {
+    std::vector<int> numbers;
+    std::vector<std::string> tokens = tokenize(input, ",\n");
 
-#include <string>
-#include <vector>
-#include <sstream>
-#include <stdexcept>
-#include <regex>
-
-namespace {
-    void addTokenIfNotEmpty(const std::string& token, std::vector<std::string>& tokens) {
-        if (!token.empty()) {
-            tokens.push_back(token);
-        }
+    for (const std::string& token : tokens) {
+        numbers.push_back(std::stoi(token));
     }
-
-    std::vector<std::string> splitHelper(const std::string& str, const std::string& delimiter) {
-        std::vector<std::string> tokens;
-        size_t prev = 0, pos = 0;
-        while ((pos = str.find(delimiter, prev)) != std::string::npos) {
-            std::string token = str.substr(prev, pos - prev);
-            addTokenIfNotEmpty(token, tokens);
-            prev = pos + delimiter.length();
-        }
-        std::string token = str.substr(prev);
-        addTokenIfNotEmpty(token, tokens);
-        return tokens;
-    }
-
-    std::vector<std::string> split(const std::string& str, const std::string& delimiter) {
-        return splitHelper(str, delimiter);
-    }
-
-    std::vector<std::string> tokenize(const std::string& str, const std::string& delimiters) {
-        std::vector<std::string> tokens;
-        std::string regexPattern = "[" + delimiters + "\n]";
-        std::regex re(regexPattern);
-        std::sregex_token_iterator it(str.begin(), str.end(), re, -1);
-        std::sregex_token_iterator end;
-        while (it != end) {
-            tokens.push_back(*it++);
-        }
-        return tokens;
-    }
-
-    std::string getDelimiter(const std::string& str) {
-        if (str.substr(0, 2) == "//") {
-            size_t endPos = str.find('\n');
-            return str.substr(2, endPos - 2);
-        }
-        return ",\n";
-    }
-
-    std::string getNumbersString(const std::string& str) {
-        if (str.substr(0, 2) == "//") {
-            size_t newlinePos = str.find('\n');
-            return str.substr(newlinePos + 1);
-        }
-        return str;
-    }
-
-    void throwNegativesException(const std::vector<int>& negatives) {
-        std::ostringstream oss;
-        oss << "negatives not allowed: ";
-        for (size_t i = 0; i < negatives.size(); ++i) {
-            if (i > 0) oss << ", ";
-            oss << negatives[i];
-        }
-        throw std::runtime_error(oss.str());
-    }
-
-    void collectNegatives(const std::vector<int>& numbers, std::vector<int>& negatives) {
-        for (int num : numbers) {
-            if (num < 0) {
-                negatives.push_back(num);
-            }
-        }
-    }
-
-    void checkNegatives(const std::vector<int>& numbers) {
-        std::vector<int> negatives;
-        collectNegatives(numbers, negatives);
-        if (!negatives.empty()) {
-            throwNegativesException(negatives);
-        }
-    }
-
-    int sumNumbers(const std::vector<int>& numbers) {
-        int sum = 0;
-        for (int num : numbers) {
-            if (num <= 1000) {
-                sum += num;
-            }
-        }
-        return sum;
-    }
-
-    std::vector<int> parseNumbers(const std::vector<std::string>& tokens) {
-        std::vector<int> numbers;
-        for (const std::string& token : tokens) {
-            if (!token.empty()) {
-                numbers.push_back(std::stoi(token));
-            }
-        }
-        return numbers;
-    }
-
-    std::vector<std::string> extractTokens(const std::string& numbers) {
-        std::string delimiters = getDelimiter(numbers);
-        std::string nums = getNumbersString(numbers);
-        return tokenize(nums, delimiters);
-    }
-
-    std::vector<int> extractAndParseNumbers(const std::string& numbers) {
-        std::vector<std::string> tokens = extractTokens(numbers);
-        return parseNumbers(tokens);
-    }
+    return numbers;
 }
 
-int add(const std::string& numbers) {
-    if (numbers.empty()) {
-        return 0;
+// Add function to sum the numbers in the input string
+int add(const std::string& input) {
+    std::string delimiter = getDelimiter(input);
+    std::string numbersString = getNumbersString(input);
+    std::vector<std::string> tokens = splitHelper(numbersString, delimiter);
+
+    std::vector<int> numbers;
+    for (const std::string& token : tokens) {
+        numbers.push_back(std::stoi(token));
     }
 
-    std::vector<int> parsedNumbers = extractAndParseNumbers(numbers);
-    checkNegatives(parsedNumbers);
-    return sumNumbers(parsedNumbers);
+    std::vector<int> negatives;
+    collectNegatives(numbers, negatives);
+    throwNegativesException(negatives);
+
+    return sumNumbers(numbers);
 }
 
-#endif // STRING_CALCULATOR_H
 
 
