@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "StringCalculator.h"
- TEST(StringCalculatorTests, AddTokenIfNotEmpty) {
+
+TEST(StringCalculatorTests, AddTokenIfNotEmpty) {
     std::vector<std::string> tokens;
     addTokenIfNotEmpty("", tokens);
     ASSERT_EQ(tokens.size(), 0); // Expect no tokens added for empty string
@@ -28,16 +29,19 @@ TEST(StringCalculatorTests, Tokenize) {
     ASSERT_EQ(tokens[1], "2");
     ASSERT_EQ(tokens[2], "3");
 }
+
 TEST(StringCalculatorTests, GetDelimiter) {
     std::string input = "//;\n1;2;3";
     std::string delimiter = getDelimiter(input);
     ASSERT_EQ(delimiter, ";"); // Expect ';' as delimiter
 }
+
 TEST(StringCalculatorTests, GetNumbersString) {
     std::string input = "//;\n1;2;3";
     std::string numbers = getNumbersString(input);
     ASSERT_EQ(numbers, "1;2;3"); // Expect "1;2;3" as numbers string
 }
+
 TEST(StringCalculatorTests, NegativeNumbersHandling) {
     std::vector<int> nums = {1, -2, 3, -4};
     std::vector<int> negatives;
@@ -52,11 +56,14 @@ TEST(StringCalculatorTests, NegativeNumbersHandling) {
         ASSERT_TRUE(errorMessage.find("-2") != std::string::npos);
         ASSERT_TRUE(errorMessage.find("-4") != std::string::npos);
     }
+}
+
 TEST(StringCalculatorTests, SumNumbers) {
     std::vector<int> nums = {1, 2, 3};
     int sum = sumNumbers(nums);
     ASSERT_EQ(sum, 6); // Expect sum to be 6
 }
+
 TEST(StringCalculatorTests, ParseAndExtractTokens) {
     std::string input = "1,2,3";
     std::vector<int> parsedNumbers = extractAndParseNumbers(input);
